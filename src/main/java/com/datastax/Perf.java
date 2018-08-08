@@ -50,7 +50,7 @@ public class Perf {
 
 
     static final int NUM_THREADS = 1;
-    static final int NUM_REQUESTS = 10000;
+    static final int NUM_REQUESTS = 9999999;
     static final int NUM_CONCURRENT_REQUESTS = 10000;
 
     public static class TrustAllX509TrustManager implements X509TrustManager {
