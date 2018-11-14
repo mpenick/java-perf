@@ -5,6 +5,7 @@ import com.codahale.metrics.Timer;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.utils.UUIDs;
@@ -156,6 +157,7 @@ public class Perf {
         int numConcurrentRequests = Math.min(numRequests, NUM_CONCURRENT_REQUESTS);
         for (int i = 0; i < numConcurrentRequests; ++i) {
             BoundStatement statement = prepared.bind(UUIDs.random(), DATA);
+            statement.setIdempotent(true);
             statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
             ResultSetFuture future = session.executeAsync(statement);
             Futures.addCallback(future, new Callback(session, prepared, latch, executor), executor);
@@ -228,6 +230,8 @@ public class Perf {
         Cluster.Builder builder = Cluster.builder()
                 .addContactPoints(contactPoints.split(","))
                 .withRetryPolicy(new PrintRetryPolicy())
+                .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder()
+                        .withLocalDc("dc1").build())
                 .withPoolingOptions(new PoolingOptions()
                         .setConnectionsPerHost(HostDistance.LOCAL, connectionPerHost, connectionPerHost)
                         .setMaxRequestsPerConnection(HostDistance.LOCAL, maxRequestPerConnection)
